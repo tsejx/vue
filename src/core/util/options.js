@@ -276,6 +276,9 @@ function checkComponents (options: Object) {
   }
 }
 
+// 校验组件名
+// 不能与原生 HTML 标签名同名
+// 例如 header nav etc.
 export function validateComponentName (name: string) {
   if (!new RegExp(`^[a-zA-Z][\\-\\.0-9_${unicodeRegExp.source}]*$`).test(name)) {
     warn(

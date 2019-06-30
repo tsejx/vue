@@ -35,6 +35,7 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
+//
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -42,20 +43,32 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.set = function proxySetter (val) {
     this[sourceKey][key] = val
   }
+  // target 实际上是 vm
+  // vm.key.getter => sharedPropertyDefinition.get => vm[sourceKey][key]
+  // vm.key.setter => sharedPropertyDefinition.set
+  // 相当于
+  // vm.message => vm._data.message
+  // _data 不要使用
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  // 初始化 Props
   if (opts.props) initProps(vm, opts.props)
+  // 初始化 Methods
   if (opts.methods) initMethods(vm, opts.methods)
+  // 初始化 Data
   if (opts.data) {
     initData(vm)
   } else {
+    // 该组件没有 data 的时候绑定一个空对象
     observe(vm._data = {}, true /* asRootData */)
   }
+  // 初始化 Computed
   if (opts.computed) initComputed(vm, opts.computed)
+  // 初始化 Watch
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -109,11 +122,14 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
-function initData (vm: Component) {
+// 初始化 Data 函数
+function initData(vm: Component) {
+  // 获取 data 数据
   let data = vm.$options.data
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+  // 判断 data 是否为对象
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -123,6 +139,8 @@ function initData (vm: Component) {
     )
   }
   // proxy data on instance
+  // 代理 data 到 vm 实例上
+  // 下面它們之间会做对比 目的是防止这些需要代理的属性方法之间出现重名情况
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
@@ -144,13 +162,18 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 判断是否是保留字段
+      // 这里是真正的将 data 上属性代理到 vm 实例上
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  // 开始 observe 对数据进行绑定
+  // 作为根数据，下面会进行递归 observe 进行深层对象的绑定
   observe(data, true /* asRootData */)
 }
 
+// 当 Data 为函数时
 export function getData (data: Function, vm: Component): any {
   // #7573 disable dep collection when invoking data getters
   pushTarget()

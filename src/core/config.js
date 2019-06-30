@@ -8,6 +8,7 @@ import {
 
 import { LIFECYCLE_HOOKS } from 'shared/constants'
 
+// 全局 Config
 export type Config = {
   // user
   optionMergeStrategies: { [key: string]: Function };

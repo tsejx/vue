@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== 'production') {
     'require' // for Webpack/Browserify
   )
 
+  // render 过程中有未在 data methods 或 props 中定义的属性
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -75,7 +76,8 @@ if (process.env.NODE_ENV !== 'production') {
     }
   }
 
-  initProxy = function initProxy (vm) {
+  initProxy = function initProxy(vm) {
+    // 判断浏览器是否支持 Proxy
     if (hasProxy) {
       // determine which proxy handler to use
       const options = vm.$options

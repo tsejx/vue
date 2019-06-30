@@ -45,13 +45,20 @@ export class Observer {
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
+      // 如果是数组，将修改后可以截获响应的数组方法替换掉该数组原型中的原生方法，达到监听数组数据变化响应的效果
+      // 如果浏览器支持隐式原型对象，则直接覆盖当前数组对象原型上的原生数组方法
+      // 如果不支持，则直接覆盖数组对象的原型
       if (hasProto) {
+        // 直接覆盖原型的方法来修改目标对象
         protoAugment(value, arrayMethods)
       } else {
+        // 定义（覆盖目标对象或数组的某个方法）
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      // 如果是数组则需要遍历数组的每个成员进行 observe
       this.observeArray(value)
     } else {
+      // 如果是对象则直接 walk 进行绑定
       this.walk(value)
     }
   }
@@ -83,6 +90,7 @@ export class Observer {
 /**
  * Augment a target Object or Array by intercepting
  * the prototype chain using __proto__
+ * 直接覆盖原型的方法来修改目标对象或数组
  */
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
@@ -93,6 +101,7 @@ function protoAugment (target, src: Object) {
 /**
  * Augment a target Object or Array by defining
  * hidden properties.
+ * 定义（覆盖）目标对象或数组的某个方法
  */
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
@@ -131,6 +140,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * 在对象上定义响应式特性
  */
 export function defineReactive (
   obj: Object,

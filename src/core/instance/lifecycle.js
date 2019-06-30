@@ -58,6 +58,7 @@ export function initLifecycle (vm: Component) {
 export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
+    // 用于更新的一些属性
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
@@ -66,9 +67,12 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // based on the rendering backend used.
     if (!prevVnode) {
       // initial render
+      // 初始化渲染
+      // 参数：真实 DOM、虚拟 DOM、hydrating、removeOnly
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      // 更新重渲染
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -138,18 +142,30 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * 挂载组件，完成整个渲染工作
+ * @param {*} vm 实例对象
+ * @param {*} el 挂载的 DOM 节点
+ * @param {*} hydrating
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  // 缓存
   vm.$el = el
   if (!vm.$options.render) {
+    // 如果实例没有 render 并且 template 没有转化为 render 函数
+    // 创建空的 VNode
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
+        // 使用了非编译版本但是用了 template
+        // 使用了运行时版本但是没有写 render
+        // template 和 render 都没写
         warn(
           'You are using the runtime-only build of Vue where the template ' +
           'compiler is not available. Either pre-compile the templates into ' +
@@ -187,6 +203,9 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // vm._render 会生成 VNode（虚拟 DOM）
+      // VNode 传入 _update
+      // _update 负责将虚拟 DOM 渲染到真实 DOM 树中
       vm._update(vm._render(), hydrating)
     }
   }
@@ -194,6 +213,8 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // 渲染 Watcher
+  // 响应式原理
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

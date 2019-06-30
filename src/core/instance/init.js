@@ -12,10 +12,14 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
 
-export function initMixin (Vue: Class<Component>) {
+export function initMixin(Vue: Class<Component>) {
+  // 原型上挂载 init 方法
+  // 1. 初始化（生命周期、事件、render 函数、state 等）
+  // 2. $mount 组件
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
+    // Vue 实例的唯一标识
     vm._uid = uid++
 
     let startTag, endTag
@@ -27,14 +31,20 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
+    // 防止 vm 实例自身被观察的标识位
     vm._isVue = true
     // merge options
+    // 合并配置
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
+      // 内置组件的初始化
       initInternalComponent(vm, options)
     } else {
+      // 将 Vue 上的属性方法合并到 vm 实例上
+      // 当前实例的初始化选项
+      // 允许在初始化选项中定义<自定义属性>
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -48,24 +58,36 @@ export function initMixin (Vue: Class<Component>) {
       vm._renderProxy = vm
     }
     // expose real self
+    // 暴露真实的实例
     vm._self = vm
+    // 初始化生命周期
     initLifecycle(vm)
+    // 初始化事件
     initEvents(vm)
+    // 初始化 render
     initRender(vm)
+    // 调用 beforeCreate 钩子函数并触发 beforeCreate 钩子函数
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+    // Proxy 处理（将一些状态管理代理到 Vue 实例上）
+    // 这里就是将原本 this.data、this.props 或 this.methods 的属性方法
+    // 代理到 vm 实例上，开发者在调用时可以直接 this.xxx 使用相关属性或方法
     initState(vm)
     initProvide(vm) // resolve provide after data/props
+    // 调用 created 钩子函数并且触发 created 钩子函数
     callHook(vm, 'created')
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+      // 格式化组件名
       vm._name = formatComponentName(vm, false)
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // 判断实例化配置对象是否有指定挂载的 DOM 对象
     if (vm.$options.el) {
+      // 挂载组件
       vm.$mount(vm.$options.el)
     }
   }

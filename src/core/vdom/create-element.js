@@ -27,12 +27,18 @@ const ALWAYS_NORMALIZE = 2
 // without getting yelled at by flow
 export function createElement (
   context: Component,
+  // HTML 标签
   tag: any,
+  // 关于节点的数据
   data: any,
+  // 子节点
   children: any,
   normalizationType: any,
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
+  // 如果 data 参数不存在，那么 children normalizationType 等向前移动
+  // 也就是 children => data,normalizationType => children
+  // 参数前移
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
@@ -51,6 +57,8 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+  // data 不能是个响应式的
+  // 一旦有 __ob__ 就是响应式的
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -60,6 +68,8 @@ export function _createElement (
     return createEmptyVNode()
   }
   // object syntax in v-bind
+  // 是否有 :is 定义组件
+  // 有的话 tag 就是 :is 定义的值
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
@@ -104,6 +114,7 @@ export function _createElement (
       )
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
+      // 创建组件
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
@@ -116,6 +127,7 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    // 创建组件
     vnode = createComponent(tag, data, context, children)
   }
   if (Array.isArray(vnode)) {
