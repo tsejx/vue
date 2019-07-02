@@ -18,8 +18,11 @@ import {
   convertEnumeratedValue
 } from 'web/util/index'
 
+// attr 只需在 create 以及  update 钩子被调用时更新 DOM 的 attr 属性即可。
+
 function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const opts = vnode.componentOptions
+  // 如果旧的以及新的 VNode 节点均没有 attr 属性，则直接返回
   if (isDef(opts) && opts.Ctor.options.inheritAttrs === false) {
     return
   }
@@ -27,14 +30,19 @@ function updateAttrs (oldVnode: VNodeWithData, vnode: VNodeWithData) {
     return
   }
   let key, cur, old
+  // VNode 节点对应的 DOM 实例
   const elm = vnode.elm
+  // 旧 VNode 节点的 attr
   const oldAttrs = oldVnode.data.attrs || {}
+  // 新 VNode 节点 attr
   let attrs: any = vnode.data.attrs || {}
   // clone observed objects, as the user probably wants to mutate it
+  // 如果新的 VNode 的 attr 已经有 __ob__（代表已经被 Observe 处理过）进行深拷贝
   if (isDef(attrs.__ob__)) {
     attrs = vnode.data.attrs = extend({}, attrs)
   }
 
+  // 遍历 att，不一致则替换
   for (key in attrs) {
     cur = attrs[key]
     old = oldAttrs[key]

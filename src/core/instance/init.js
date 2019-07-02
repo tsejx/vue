@@ -86,6 +86,7 @@ export function initMixin(Vue: Class<Component>) {
     }
 
     // 判断实例化配置对象是否有指定挂载的 DOM 对象
+    // 如果实例没有 el 则，当 vm.$mount(el) 调用时才触发相关 vm 实例的渲染
     if (vm.$options.el) {
       // 挂载组件
       vm.$mount(vm.$options.el)
@@ -114,12 +115,19 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
+  // 如果存在父类
   if (Ctor.super) {
+    // 对父类进行 resolveConstructorOptions 获取父类 options
     const superOptions = resolveConstructorOptions(Ctor.super)
+    // 之前已经缓存起来的父类的 iption，用以检测是否更新
     const cachedSuperOptions = Ctor.superOptions
+    // 对比当前父类的 option 以及缓存中的 option，两个不一样则代表已经被更新
     if (superOptions !== cachedSuperOptions) {
       // super option changed,
       // need to resolve new options.
+      // 父类的 option 已经改变，需要去处理新的 option
+
+      // 把新的 option 缓存起来
       Ctor.superOptions = superOptions
       // check if there are any late-modified/attached options (#4976)
       const modifiedOptions = resolveModifiedOptions(Ctor)

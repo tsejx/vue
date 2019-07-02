@@ -17,6 +17,7 @@ export const MAX_UPDATE_COUNT = 100
 const queue: Array<Watcher> = []
 const activatedChildren: Array<Component> = []
 let has: { [key: number]: ?true } = {}
+// 玄幻更新
 let circular: { [key: number]: number } = {}
 let waiting = false
 let flushing = false
@@ -77,10 +78,13 @@ function flushSchedulerQueue () {
   // This ensures that:
   // 1. Components are updated from parent to child. (because parent is always
   //    created before the child)
+  //    组件更新从父级更新到子级（因为父级总是在子级之前创建）
   // 2. A component's user watchers are run before its render watcher (because
   //    user watchers are created before the render watcher)
+  //    一个组件 user watchers 在其 render watcher 前执行（因为 user watcher 在 render watcher 之前创建）
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
+  //    组件销毁在父组件的 watcher 中执行，那么子组件内的 watcher 都不用执行
   queue.sort((a, b) => a.id - b.id)
 
   // do not cache length because more watchers might be pushed
@@ -92,8 +96,10 @@ function flushSchedulerQueue () {
     }
     id = watcher.id
     has[id] = null
+    // 会执行一些回调
     watcher.run()
     // in dev build, check and stop circular updates.
+    // 出现循环更新的问题，这个时候应该检查 watcher 相关的依赖的数据对象是否有不合理的逻辑
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
       if (circular[id] > MAX_UPDATE_COUNT) {
@@ -160,8 +166,11 @@ function callActivatedHooks (queue) {
  * Push a watcher into the watcher queue.
  * Jobs with duplicate IDs will be skipped unless it's
  * pushed when the queue is being flushed.
+ *
+ * 把所有需要更新的 watcher 往一个队列推
  */
-export function queueWatcher (watcher: Watcher) {
+export function queueWatcher(watcher: Watcher) {
+  // 不同 watcher ID 不同
   const id = watcher.id
   if (has[id] == null) {
     has[id] = true
@@ -184,6 +193,7 @@ export function queueWatcher (watcher: Watcher) {
         flushSchedulerQueue()
         return
       }
+      // 下个 tick 执行
       nextTick(flushSchedulerQueue)
     }
   }

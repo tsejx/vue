@@ -203,9 +203,10 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
-      // vm._render 会生成 VNode（虚拟 DOM）
-      // VNode 传入 _update
-      // _update 负责将虚拟 DOM 渲染到真实 DOM 树中
+      // vm._render 会生成新的 VNode 节点（虚拟 DOM）
+      // VNode 传入 _update 与旧 VNode 进行对比
+      // 经过 patch 过程得到两个 VNode 节点的差异 diff
+      // 最后将这些差异渲染到真实 DOM 树中
       vm._update(vm._render(), hydrating)
     }
   }
@@ -213,8 +214,11 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
-  // 渲染 Watcher
-  // 响应式原理
+  //
+  // 我们将把 vm._watcher 设置进 watcher 实例的构造函数内
+  // 因为 watcher 的初始补丁可能会调用 $forceUpdate（例如，在子组件中的）
+  //
+  // 渲染 Watcher 响应式原理
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

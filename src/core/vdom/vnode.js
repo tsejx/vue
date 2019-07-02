@@ -39,25 +39,48 @@ export default class VNode {
     componentOptions?: VNodeComponentOptions,
     asyncFactory?: Function
   ) {
+    // 当前节点的标签名
     this.tag = tag
+    // 当前节点对应的对象
+    // 包含了一些具体的数据信息 VNodeData 类型
     this.data = data
+    // 当前节点的子节点 数组类型
     this.children = children
+    // 当前节点的文本
     this.text = text
+    // 当前虚拟节点对应的真实 DOM 节点
     this.elm = elm
+    // 当前节点的名字空间
     this.ns = undefined
+    // 编译作用域
     this.context = context
+    // 函数化组件作用域
     this.fnContext = undefined
+    // 函数化组件配置
     this.fnOptions = undefined
+    // 函数化组件作用域标识
     this.fnScopeId = undefined
+    // 节点 key 属性，被当作节点标识，用于优化
     this.key = data && data.key
+    // 组件 option 选项
     this.componentOptions = componentOptions
+    // 当前节点对应的组件的实例
     this.componentInstance = undefined
+    // 当前节点的父节点
     this.parent = undefined
+    // 是否位原生 HTML 或只是普通文本
+    // innerHTML 时为 true
+    // textContext 时为 false
     this.raw = false
+    // 静态节点标识
     this.isStatic = false
+    // 是否为根节点插入
     this.isRootInsert = true
+    // 是否为注释节点
     this.isComment = false
+    // 是否为克隆节点
     this.isCloned = false
+    // 是否有 v-on 指令
     this.isOnce = false
     this.asyncFactory = asyncFactory
     this.asyncMeta = undefined
@@ -71,7 +94,7 @@ export default class VNode {
   }
 }
 
-// 注释节点 => 注释 VNode
+// 注释节点 => 注释 VNodee
 export const createEmptyVNode = (text: string = '') => {
   const node = new VNode()
   node.text = text
