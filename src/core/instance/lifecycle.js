@@ -149,15 +149,16 @@ export function lifecycleMixin (Vue: Class<Component>) {
  * @param {*} hydrating
  */
 export function mountComponent (
-  vm: Component,
-  el: ?Element,
-  hydrating?: boolean
+  vm: Component, /* 组件实例 */
+  el: ?Element, /* 挂载 DOM 元素 */
+  hydrating?: boolean /* 渲染函数 */
 ): Component {
-  // 缓存
+  // 缓存，组件模版根元素的引用
+  // 暂时赋值，给虚拟 DOM patch 算法使用，vm.$el 会在 patch 算法返回值重写
   vm.$el = el
+  // 如果实例没有 render 并且 template 没有转化为 render 函数
   if (!vm.$options.render) {
-    // 如果实例没有 render 并且 template 没有转化为 render 函数
-    // 创建空的 VNode
+    // 创建空的 VNode，此时渲染函数作用为渲染一个空的 VNode 对象
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -180,10 +181,14 @@ export function mountComponent (
       }
     }
   }
+  // 触发 beforeMount 钩子函数
   callHook(vm, 'beforeMount')
 
+  // 开始组件的挂载工作
+  // 以下流程为初始化定义 updateComponent
   let updateComponent
   /* istanbul ignore if */
+  // 非生产环境，性能统计
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
       const name = vm._name
@@ -202,8 +207,12 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    // 作用：把渲染函数生成的虚拟DOM渲染成真正的DOM
+    // updateComponent
     updateComponent = () => {
-      // vm._render 会生成新的 VNode 节点（虚拟 DOM）
+      // vm._render 会调用 vm.$options.render 函数生成 VNode 节点（虚拟 DOM）
+      // vm._update 函数作用是把 vm._render 函数生成的 VNode 节点渲染成真正的 DOM
+      //
       // VNode 传入 _update 与旧 VNode 进行对比
       // 经过 patch 过程得到两个 VNode 节点的差异 diff
       // 最后将这些差异渲染到真实 DOM 树中
@@ -219,9 +228,15 @@ export function mountComponent (
   // 因为 watcher 的初始补丁可能会调用 $forceUpdate（例如，在子组件中的）
   //
   // 渲染 Watcher 响应式原理
+  // 1. 当前组件实例 vm
+  // 2. 被观察的目标（函数）updateComponent
+  // 3. 空函数 noop
+  // 4. 作为传递给该观察者的选项
+  // 5. 标识着该观察者实例对象是否是渲染函数的观察者 true
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
+        // 数据变化后，触发更新
         callHook(vm, 'beforeUpdate')
       }
     }

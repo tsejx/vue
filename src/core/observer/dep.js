@@ -64,15 +64,18 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
-// 依赖收集完需要将 Dep.target 设为 null，防止后面重复添加依赖
 // Dep.target 作为 Dep 类的静态属性，相当于全局的 Watcher
+// Dep.target 相当于正在被计算处理的 Watacher 实例
+// 依赖收集完需要将 Dep.target 设为 null，防止后面重复添加依赖
 // 因为同一时间只有一个 Watcher 会被计算
 Dep.target = null
 
 // 利用栈的数据结构保存当前计算的 target，因为会有嵌套的子组件
 const targetStack = []
 
-// 将 watcher 观察者实例设置给 Dep.target，用以依赖收集。同时该实例存入 target 栈中
+// 主要作用是为 Dep.target 赋值
+// 将 watcher 观察者实例设置给 Dep.target（表示即将要收集的目标），用以依赖收集。
+// 同时该实例存入 targetStack 栈中
 // 将上个 watcher，可以理解为父组件的 watcher 放入栈中保存，然后处理子组件的 target
 // 当子组件的 target 处理完后，会调用 popTarget 弹出栈，然后继续处理父组件的 target
 export function pushTarget (target: ?Watcher) {

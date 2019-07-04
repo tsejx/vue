@@ -76,19 +76,21 @@ function flushSchedulerQueue () {
 
   // Sort queue before flush.
   // This ensures that:
+  // 根据 id 排序 watcher
   // 1. Components are updated from parent to child. (because parent is always
   //    created before the child)
   //    组件更新从父级更新到子级（因为父级总是在子级之前创建）
   // 2. A component's user watchers are run before its render watcher (because
   //    user watchers are created before the render watcher)
-  //    一个组件 user watchers 在其 render watcher 前执行（因为 user watcher 在 render watcher 之前创建）
+  //    用户写的 watcher 要先于渲染 watcher（因为 user watcher 在 render watcher 之前创建）
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
-  //    组件销毁在父组件的 watcher 中执行，那么子组件内的 watcher 都不用执行
+  //    如果父组件 watcher run 的时候组件销毁了，这个 watcher 可以被跳过
   queue.sort((a, b) => a.id - b.id)
 
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
+  // 不缓存队列长度，因为在遍历的过程中可能队列的长队有变化
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
     if (watcher.before) {
@@ -96,10 +98,11 @@ function flushSchedulerQueue () {
     }
     id = watcher.id
     has[id] = null
-    // 会执行一些回调
+    // 在这里执行用户写的 watch 的回调函数并且渲染组件
     watcher.run()
     // in dev build, check and stop circular updates.
-    // 出现循环更新的问题，这个时候应该检查 watcher 相关的依赖的数据对象是否有不合理的逻辑
+    // 判断无限循环的情况
+    // 如果出现循环更新的问题，这个时候应该检查 watcher 相关的依赖的数据对象是否有不合理的逻辑
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
       if (circular[id] > MAX_UPDATE_COUNT) {
@@ -167,18 +170,29 @@ function callActivatedHooks (queue) {
  * Jobs with duplicate IDs will be skipped unless it's
  * pushed when the queue is being flushed.
  *
+ * 派发更新，异步
  * 把所有需要更新的 watcher 往一个队列推
+ *
+ * @param {Watcher}
  */
 export function queueWatcher(watcher: Watcher) {
-  // 不同 watcher ID 不同
+  // 不同 watcher id 不同
   const id = watcher.id
+  // 判断 watcher 是否已经在队列中存在
+  // 因为存在改变了多个数据，多个数据 watch 是同一个的情况
+  // 这里的 has 是存储是否已推至队列的标识位哈希表
   if (has[id] == null) {
     has[id] = true
+    // flushing 标识
+    // 当更新开始时会将该标识设置为 true，代表此时正在执行更新
     if (!flushing) {
+      // 因此只有当队列没有执行更新时才会简地将观察者追加到队列的尾部
       queue.push(watcher)
     } else {
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
+      // 在执行 flushSchedulerQueue 函数时，如果有新的派发更新会进入这里
+      // 插入新的 watcher
       let i = queue.length - 1
       while (i > index && queue[i].id > watcher.id) {
         i--
@@ -186,6 +200,7 @@ export function queueWatcher(watcher: Watcher) {
       queue.splice(i + 1, 0, watcher)
     }
     // queue the flush
+    // 最初进入这个条件，只执行一次
     if (!waiting) {
       waiting = true
 
@@ -193,7 +208,9 @@ export function queueWatcher(watcher: Watcher) {
         flushSchedulerQueue()
         return
       }
-      // 下个 tick 执行
+      // 将所有 Watcher 统一放入 nextTick 调用
+      // 因为每次派发更新都会引发渲染
+      // flushSchedulerQueue 作用之一就是用来将队列中的观察者统一执行更新
       nextTick(flushSchedulerQueue)
     }
   }

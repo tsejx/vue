@@ -216,6 +216,7 @@ function initComputed (vm: Component, computed: Object) {
   const isSSR = isServerRendering()
 
   for (const key in computed) {
+    // 计算属性配置对象对应的属性值（可以是函数也可以是对象）
     const userDef = computed[key]
     // 计算属性可能是一个 function，也有可能设置了 get 以及 set 的对象
     const getter = typeof userDef === 'function' ? userDef : userDef.get
@@ -228,11 +229,12 @@ function initComputed (vm: Component, computed: Object) {
 
     if (!isSSR) {
       // create internal watcher for the computed property.
+      // 计算属性的观察者
       watchers[key] = new Watcher(
         vm,
         getter || noop,
         noop,
-        computedWatcherOptions
+        computedWatcherOptions /* 用于标识一个观察者对象是计算属性的观察者 */
       )
     }
 
@@ -240,6 +242,7 @@ function initComputed (vm: Component, computed: Object) {
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
     if (!(key in vm)) {
+      // 组件实例中无同名属性
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
       // 如果计算属性与已定义的 data 或者 props 中的名称冲突则发出 warning
@@ -252,14 +255,21 @@ function initComputed (vm: Component, computed: Object) {
   }
 }
 
+/**
+ * 通过 Object.defineProperty 函数在组件实例对象上定义与计算属性同名的组件实例属性，而且是访问器属性，属性的配置参数是 sharedPropertyDefinition
+ * @param {*} target
+ * @param {*} key
+ * @param {*} userDef
+ */
 export function defineComputed (
   target: any,
   key: string,
   userDef: Object | Function
 ) {
+  // 是否应该缓存值（只有在非服务端渲染情况下计算属性才缓存值）
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
-    // 定义的 computed 为函数
+    // computed 选项为函数
 
     // 设置 getter / setter
     sharedPropertyDefinition.get = shouldCache
@@ -267,6 +277,7 @@ export function defineComputed (
       : createGetterInvoker(userDef)
     sharedPropertyDefinition.set = noop
   } else {
+    // computed 选项为对象
     sharedPropertyDefinition.get = userDef.get
       ? shouldCache && userDef.cache !== false
         ? createComputedGetter(key)
@@ -287,8 +298,10 @@ export function defineComputed (
 }
 
 // 访问 computed 值时触发的回调函数
+// 生成 computed 属性的 getter
 function createComputedGetter (key) {
-  return function computedGetter () {
+  return function computedGetter() {
+    // 用于计算 computed key 的观察者对象
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
       if (watcher.dirty) {
@@ -336,6 +349,12 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
+/**
+ * 通过创建 Watcher 实例对象来实现观测
+ * 创建过程会读取指定到 watch 选项的 函数名、字符串等
+ * @param {*} vm
+ * @param {*} watch
+ */
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
@@ -349,6 +368,13 @@ function initWatch (vm: Component, watch: Object) {
   }
 }
 
+/**
+ * 将纯对象形式的参数规范化，通过 $watch 创建观察者
+ * @param {*} vm
+ * @param {*} expOrFn
+ * @param {*} handler
+ * @param {*} options
+ */
 function createWatcher (
   vm: Component,
   expOrFn: string | Function,
@@ -357,6 +383,8 @@ function createWatcher (
 ) {
   if (isPlainObject(handler)) {
     options = handler
+    // handler 可以是字符串也可以是函数
+    // 如果是字符串则指定 methods 中该名称的方法为回调函数
     handler = handler.handler
   }
   if (typeof handler === 'string') {
@@ -392,22 +420,29 @@ export function stateMixin (Vue: Class<Component>) {
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+  // 用于观测某个数据对象的某个属性，当属性变化时执行回调
+  // 本质上就是创建一个 Watcher 的实例对象
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
-    cb: any,
+    cb: any, /* 回调函数 */
     options?: Object
   ): Function {
+    // 表示当前组件实例对象
     const vm: Component = this
+    // 第二参数是否是纯对象
     if (isPlainObject(cb)) {
+      // 第二参数未纯对象
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
     // user 模式
+    // 表示创建的观察者实例 watcher 由开发者创建
     options.user = true
-    // 实例化订阅者
+    // 创建观察者实例
     const watcher = new Watcher(vm, expOrFn, cb, options)
     if (options.immediate) {
       // 如果 immediate 立即执行
+      // 此时回调函数只有新值没有旧值
       try {
         cb.call(vm, watcher.value)
       } catch (error) {
@@ -415,7 +450,7 @@ export function stateMixin (Vue: Class<Component>) {
       }
     }
     return function unwatchFn() {
-      // 销毁 watcher
+      // 用于解除当前观察者对属性的观察
       watcher.teardown()
     }
   }

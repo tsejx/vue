@@ -34,12 +34,14 @@ extend(Vue.options.components, platformComponents)
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
-// 挂载到 DOM 树
+// （运行时版本）挂载到 DOM 树
 Vue.prototype.$mount = function (
   el?: string | Element,
-  hydrating?: boolean
+  hydrating?: boolean /* 用于 Virtual DOM 的补丁算法 */
 ): Component {
+  // 获取 DOM 节点，宿主环境为非浏览器情况为 undefined
   el = el && inBrowser ? query(el) : undefined
+  // 调用 mountComponent 完成真正的挂载工作，并返回其运行结果
   return mountComponent(this, el, hydrating)
 }
 

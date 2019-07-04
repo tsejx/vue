@@ -10,11 +10,14 @@ export let isUsingMicroTask = false
 const callbacks = []
 let pending = false
 
-function flushCallbacks () {
+function flushCallbacks() {
+  // 切换回调队列等待更新的状态为 非等待中
   pending = false
+  // 常量保存副本，并清空回调队列
   const copies = callbacks.slice(0)
   callbacks.length = 0
   for (let i = 0; i < copies.length; i++) {
+    // 调用 callbacks 的每个 callback 回调函数
     copies[i]()
   }
 }
@@ -84,6 +87,11 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
 }
 
+/**
+ * nextTick
+ * @param {*} cb 回调函数
+ * @param {*} ctx 指定作用域
+ */
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
   callbacks.push(() => {
@@ -97,8 +105,10 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+  // pending 表示回调队列是否处于等待刷新的状态
   if (!pending) {
     pending = true
+    // 刷新回调队列
     timerFunc()
   }
   // $flow-disable-line
