@@ -218,6 +218,7 @@ function genConfig (name) {
   const config = {
     input: opts.entry,
     external: opts.external,
+    sourcemap: true,
     plugins: [
       flow(),
       alias(Object.assign({}, aliases, opts.alias))
