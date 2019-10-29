@@ -7,10 +7,15 @@ import { isIE, isIOS, isNative } from './env'
 
 export let isUsingMicroTask = false
 
+// 存放异步执行的回调
 const callbacks = []
+// 一个标记位，如果已经有 timerFunc 被推送到任务队列中去则不需要重复推送
 let pending = false
 
+// 下一个 tick 时的回调
 function flushCallbacks() {
+  // 标记位，标记等待状态（即函数已经推入任务队列或者主线程，已经在等待当前栈执行完毕去执行）
+  // 这样就不需要在 push 多个回调到 callbacks 时将 timerFunc 多次推入任务队列或者主线程
   // 切换回调队列等待更新的状态为 非等待中
   pending = false
   // 常量保存副本，并清空回调队列

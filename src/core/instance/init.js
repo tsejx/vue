@@ -17,7 +17,6 @@ export function initMixin(Vue: Class<Component>) {
   // 1. 初始化（生命周期、事件、render 函数、state 等）
   // 2. $mount 组件
   // eslint-disable-next-line no-debugger
-  debugger;
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid

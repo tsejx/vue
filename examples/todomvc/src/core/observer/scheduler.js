@@ -68,6 +68,7 @@ if (inBrowser && !isIE) {
 
 /**
  * Flush both queues and run the watchers.
+ * flushSchedulerQueue 是下一个 tick 时的回调函数，主要目的是执行 Watcher 的 run 函数，用来更新视图
  */
 function flushSchedulerQueue () {
   currentFlushTimestamp = getNow()
@@ -77,17 +78,17 @@ function flushSchedulerQueue () {
   // Sort queue before flush.
   // This ensures that:
   // 根据 id 排序 watcher
+  // 刷新前给 queue 排序，这样做是为了保证：
   // 1. Components are updated from parent to child. (because parent is always
   //    created before the child)
   //    组件更新从父级更新到子级（因为父级总是在子级之前创建）
   // 2. A component's user watchers are run before its render watcher (because
   //    user watchers are created before the render watcher)
-  //    用户写的 watcher 要先于渲染 watcher（因为 user watcher 在 render watcher 之前创建）
+  //    user watcher 要先于 render watcher 先运行（因为 user watcher 在 render watcher 之前创建）
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
-  //    如果父组件 watcher run 的时候组件销毁了，这个 watcher 可以被跳过
+  //    如果父组件 watcher run 的时候组件销毁了，这个 watcher 将被跳过
   queue.sort((a, b) => a.id - b.id)
-
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
   // 不缓存队列长度，因为在遍历的过程中可能队列的长队有变化
@@ -120,13 +121,16 @@ function flushSchedulerQueue () {
   }
 
   // keep copies of post queues before resetting state
+  // 得到队列的拷贝
   const activatedQueue = activatedChildren.slice()
   const updatedQueue = queue.slice()
-
+  // 重置调度者的状态
   resetSchedulerState()
 
   // call component updated and activated hooks
+  // 使子组件状态都改编成 active 同时调用 activated 钩子
   callActivatedHooks(activatedQueue)
+  // 调用 updated钩子
   callUpdatedHooks(updatedQueue)
 
   // devtool hook
@@ -173,11 +177,12 @@ function callActivatedHooks (queue) {
  *
  * 派发更新，异步
  * 把所有需要更新的 watcher 往一个队列推
+ * 将观察者对象 push 进观察者队列，在队列中已经存在相同的 id 则观察者对象将被跳过，除非它是在队列被刷新时推送
  *
  * @param {Watcher}
  */
 export function queueWatcher(watcher: Watcher) {
-  // 不同 watcher id 不同
+  // 获取 watcher 的 id，不同 watcher id 不同
   const id = watcher.id
   // 判断 watcher 是否已经在队列中存在
   // 因为存在改变了多个数据，多个数据 watch 是同一个的情况

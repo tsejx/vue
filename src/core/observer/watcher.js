@@ -26,6 +26,8 @@ let uid = 0
  * 渲染函数的观察者
  * 观察程序解析表达式，收集依赖，并在表达式值更改时触发回调
  * 它被用于 $watch API 以及指令
+ *
+ * 每个 vm 对应一个 watcher，其依赖的 data 中的一个或多个属性，而不是一个 data 的属性对应一个 watcher
  */
 export default class Watcher {
   vm: Component;

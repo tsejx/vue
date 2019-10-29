@@ -34,19 +34,20 @@ const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
 
 /**
  * 判断两个 VNode 节点是否是同个节点，需要满足以下条件
- * key 相同
- * tag 当前节点的标签名 相同
- * isComment 是否为注释节点 相同
- * data 是否都有定义（当前节点对应的对象，包含了具体的一些数据信息，是 VNodeData 的类型）
- * 当标签为 input 时，type 必须相同
+ * 1.key 相同
+ * 2a-1.tag 当前节点的标签名 相同
+ * 2a-2.isComment 是否为注释节点 相同
+ * 2a-3.data 是否都有定义（当前节点对应的对象，包含了具体的一些数据信息，是 VNodeData 的类型）
+ * 2a-4.当标签为 input 时，type 必须相同
+ * 2b. SSR 相关
  * @param {*} a
  * @param {*} b
  */
 function sameVnode (a, b) {
   return (
-    a.key === b.key && (
+    a.key === b.key && ( /* key 值 */
       (
-        a.tag === b.tag &&
+        a.tag === b.tag && /* 标签名 */
         a.isComment === b.isComment &&
         isDef(a.data) === isDef(b.data) &&
         sameInputType(a, b)
@@ -553,7 +554,7 @@ export function createPatchFunction (backend) {
     index,
     removeOnly
   ) {
-    // 新旧节点不相同，则返回
+    // 新旧节点相同，则返回
     if (oldVnode === vnode) {
       return
     }
@@ -609,7 +610,7 @@ export function createPatchFunction (backend) {
         // 旧子节点与新子节点不相同，则更新子节点
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
       } else if (isDef(ch)) {
-        //旧子节点不存在，新子节点的存在
+        // 新子节点的存在
         if (process.env.NODE_ENV !== 'production') {
           checkDuplicateKeys(ch)
         }
@@ -617,11 +618,11 @@ export function createPatchFunction (backend) {
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
       } else if (isDef(oldCh)) {
-        // 旧节点的子节点存在
-
-        // 移除
+        // 旧节点的子节点存在，而新子节点不存在
+        //
         removeVnodes(elm, oldCh, 0, oldCh.length - 1)
       } else if (isDef(oldVnode.text)) {
+        // 旧节点的文本节点存在，但是旧节点和新结点的子节点不存在
         nodeOps.setTextContent(elm, '')
       }
     } else if (oldVnode.text !== vnode.text) {
